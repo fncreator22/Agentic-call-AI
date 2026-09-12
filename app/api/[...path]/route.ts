@@ -11,9 +11,9 @@ const calls = [
   { id: 'call-3', employeeId: 'rohan', leadName: 'Meera Nair', phone: '+91 99800 24567', duration: '0m 00s', status: 'retry-scheduled', sentiment: 'Unknown', summary: 'Retry queued for tomorrow morning.', recordingUrl: '#', createdAt: 'Today, 9:18 AM' },
 ];
 const plans = [
-  { id: 'value', name: 'Value', pricePerMin: 5.5, features: ['Natural calls', 'Summaries', 'CSV export'] },
-  { id: 'standard', name: 'Standard', pricePerMin: 4.5, features: ['Everything in Value', 'CRM sync', 'WhatsApp actions'] },
-  { id: 'premium', name: 'Premium', pricePerMin: 3.75, features: ['Everything in Standard', 'Priority routing', 'Dedicated success support'] },
+  { id: 'value', name: 'Value', pricePerMin: 3.5, description: 'For focused bulk calling campaigns.', features: ['Native multilingual calling', 'Call summary & fields', 'Campaign controls'] },
+  { id: 'standard', name: 'Standard', pricePerMin: 5, badge: 'Most popular', description: 'For everyday customer conversations.', features: ['Everything in Value', 'CRM sync', 'WhatsApp actions'] },
+  { id: 'premium', name: 'Premium', pricePerMin: 7, description: 'For higher-context conversations.', features: ['Everything in Standard', 'Priority routing', 'Custom integrations'] },
 ];
 const json = (value: unknown, init?: ResponseInit) => NextResponse.json(value, init);
 
@@ -34,7 +34,10 @@ export async function GET(request: NextRequest, { params }: { params: { path: st
 export async function POST(request: NextRequest, { params }: { params: { path: string[] } }) {
   const path = params.path.join('/'); const body = await request.json().catch(() => ({}));
   if (path === 'auth/login' || path === 'auth/signup') return json({ token: 'demo-svara-token', user: { name: body.name || 'Demo user', email: body.email } });
-  if (path === 'demo/call') return json({ callId: `demo-${Date.now()}`, status: 'queued' });
+  if (path === 'auth/social') return json({ token: 'demo-svara-token', user: { name: `${body.provider || 'SSO'} user`, email: 'demo@svara.ai' } });
+  if (path === 'auth/magic-link') return json({ accepted: true, email: body.email });
+  if (path === 'demo/call') return json({ callId: `demo-${Date.now()}`, status: 'queued', estimatedWaitSeconds: 24 });
+  if (path.startsWith('demo/call/') && (path.endsWith('/accepted') || path.endsWith('/declined'))) return json({ callId: body.callId, status: path.endsWith('/accepted') ? 'accepted' : 'declined' });
   if (path === 'calls/trigger') return json({ call: { id: `call-${Date.now()}`, status: 'queued', ...body } });
   if (path === 'employees') return json({ employee: { id: `employee-${Date.now()}`, ...body, status: 'Available', callsToday: 0 } });
   return json({ error: 'Not found' }, { status: 404 });
